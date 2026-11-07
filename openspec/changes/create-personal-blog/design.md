@@ -27,7 +27,7 @@ See `proposal.md` for background and motivation. This is a greenfield implementa
 - **Rationale**: Zero configuration, no database server process to manage, portable, and fast enough for high-traffic blogs when running with Write-Ahead Logging (WAL).
 - **Alternatives considered**: MySQL/PostgreSQL (added infrastructure operational complexity without tangible benefit for a personal blog).
 
-### 2. Filament v3 for Backoffice (`/admin`)
+### 2. Filament v5 for Backoffice (`/admin`)
 - **Decision**: Install Filament Panel Builder for post, tag, and media administration.
 - **Rationale**: Provides out-of-the-box authentication, rich forms, table filtering, relationship pickers, and a built-in Markdown editor without writing boilerplate CRUD controllers.
 - **Alternatives considered**: Custom Blade admin dashboard (significant manual boilerplate) or Laravel Nova (commercial license required).

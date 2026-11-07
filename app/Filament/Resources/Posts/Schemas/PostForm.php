@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Filament\Resources\Posts\Schemas;
+
+use App\Models\Post;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\MarkdownEditor;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
+use Illuminate\Support\Str;
+
+class PostForm
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Section::make('Content')
+                    ->columnSpan(2)
+                    ->schema([
+                        TextInput::make('title')
+                            ->required()
+                            ->maxLength(255)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Get $get, Set $set, ?string $state, string $operation): void {
+                                if ($operation === 'create' && filled($state)) {
+                                    $set('slug', Str::slug($state));
+                                }
+                            }),
+                        TextInput::make('slug')
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(Post::class, 'slug', ignoreRecord: true)
+                            ->alphaDash(),
+                        Textarea::make('excerpt')
+                            ->rows(3)
+                            ->columnSpanFull(),
+                        MarkdownEditor::make('body')
+                            ->required()
+                            ->columnSpanFull(),
+                    ]),
+                Section::make('Publishing')
+                    ->columnSpan(1)
+                    ->schema([
+                        FileUpload::make('cover_image')
+                            ->image()
+                            ->disk('public')
+                            ->directory('covers')
+                            ->visibility('public'),
+                        Select::make('tags')
+                            ->relationship('tags', 'name')
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
+                            ->createOptionForm([
+                                TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                            ]),
+                        Toggle::make('is_published')
+                            ->label('Published')
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, bool $state): void {
+                                if ($state && blank($get('published_at'))) {
+                                    $set('published_at', now());
+                                }
+                            }),
+                        DateTimePicker::make('published_at')
+                            ->label('Publish at')
+                            ->helperText('A future date keeps the post hidden until that time.')
+                            ->required(fn (Get $get): bool => (bool) $get('is_published')),
+                    ]),
+            ])
+            ->columns(3);
+    }
+}
