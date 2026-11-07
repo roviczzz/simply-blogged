@@ -28,5 +28,5 @@
 
 ## 5. Verification & Delivery
 
-- [ ] 5.1 Run test suite with `php artisan test` and verify all public and model tests pass.
-- [ ] 5.2 Build frontend assets with `npm run build` and perform end-to-end smoke test of public reading routes and Filament admin panel.
+- [x] 5.1 Run test suite with `php artisan test` and verify all public and model tests pass.
+- [x] 5.2 Build frontend assets with `npm run build` and perform end-to-end smoke test of public reading routes and Filament admin panel.
