@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportFileUploads\GenerateSignedUploadUrl;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -74,7 +75,63 @@ class PostResourceTest extends TestCase
         $post = Post::where('slug', 'with-cover')->firstOrFail();
 
         $this->assertNotNull($post->cover_image);
+        $this->assertStringStartsWith('covers/', $post->cover_image);
+        $this->assertStringEndsWith('.webp', $post->cover_image);
         Storage::disk('public')->assertExists($post->cover_image);
+
+        $contents = Storage::disk('public')->get($post->cover_image);
+        $this->assertStringStartsWith('RIFF', $contents);
+        $this->assertSame('WEBP', substr($contents, 8, 4));
+    }
+
+    public function test_cover_image_up_to_10mb_is_accepted_and_converted_to_webp(): void
+    {
+        Storage::fake('public');
+
+        Livewire::test(CreatePost::class)
+            ->fillForm([
+                'title' => 'Large Cover',
+                'slug' => 'large-cover',
+                'body' => 'Body',
+                'cover_image' => UploadedFile::fake()->image('large-cover.jpg')->size(5120),
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $post = Post::where('slug', 'large-cover')->firstOrFail();
+
+        $this->assertNotNull($post->cover_image);
+        $this->assertStringEndsWith('.webp', $post->cover_image);
+        Storage::disk('public')->assertExists($post->cover_image);
+    }
+
+    public function test_cover_image_exceeding_size_limit_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        Livewire::test(CreatePost::class)
+            ->fillForm([
+                'title' => 'Too Large',
+                'slug' => 'too-large',
+                'body' => 'Body',
+                'cover_image' => UploadedFile::fake()->image('large.jpg')->size(10241),
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['cover_image']);
+    }
+
+    public function test_upload_validation_failure_returns_422_json_cleanly(): void
+    {
+        $signedUrl = (new GenerateSignedUploadUrl)->forLocal();
+
+        $oversizedFile = UploadedFile::fake()->create('too-large.jpg', 15000);
+
+        $response = $this->postJson($signedUrl, [
+            'files' => [$oversizedFile],
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('files.0');
     }
 
     public function test_tags_can_be_attached_to_a_post(): void

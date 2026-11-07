@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Posts\Schemas;
 
+use App\Actions\ConvertImageToWebp;
 use App\Models\Post;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -14,7 +15,9 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class PostForm
 {
@@ -53,7 +56,12 @@ class PostForm
                             ->image()
                             ->disk('public')
                             ->directory('covers')
-                            ->visibility('public'),
+                            ->visibility('public')
+                            ->maxSize(10240)
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->saveUploadedFileUsing(static function (ConvertImageToWebp $converter, TemporaryUploadedFile|UploadedFile $file): string {
+                                return $converter->execute($file);
+                            }),
                         Select::make('tags')
                             ->relationship('tags', 'name')
                             ->multiple()

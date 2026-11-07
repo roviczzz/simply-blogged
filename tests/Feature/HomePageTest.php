@@ -79,4 +79,13 @@ class HomePageTest extends TestCase
             ->assertSee('property="og:title"', false)
             ->assertSee('application/rss+xml', false);
     }
+
+    public function test_layout_includes_brand_logo_and_favicon(): void
+    {
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('rel="icon" type="image/x-icon" href="'.asset('favicon.ico').'"', false)
+            ->assertSee('<img src="'.asset('simply-blogged.webp').'" alt="" class="h-8 w-8 rounded-lg object-contain">', false)
+            ->assertSee('<span class="text-xl font-semibold tracking-tight">'.config('app.name').'</span>', false);
+    }
 }

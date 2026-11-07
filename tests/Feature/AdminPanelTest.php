@@ -26,4 +26,21 @@ class AdminPanelTest extends TestCase
             ->get('/admin')
             ->assertOk();
     }
+
+    public function test_admin_login_page_renders_brand_logo_and_favicon(): void
+    {
+        $this->get('/admin/login')
+            ->assertOk()
+            ->assertSee('simply-blogged.webp')
+            ->assertSee('favicon.ico');
+    }
+
+    public function test_admin_dashboard_renders_brand_logo_and_favicon(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get('/admin')
+            ->assertOk()
+            ->assertSee('simply-blogged.webp')
+            ->assertSee('favicon.ico');
+    }
 }

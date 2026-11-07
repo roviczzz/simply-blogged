@@ -28,6 +28,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->brandLogo(fn () => asset('simply-blogged.webp'))
+            ->brandLogoHeight('2.5rem')
+            ->favicon(fn () => asset('favicon.ico'))
             ->colors([
                 'primary' => Color::Amber,
             ])

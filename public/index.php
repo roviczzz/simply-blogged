@@ -1,5 +1,7 @@
 <?php
 
+ob_start();
+
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 

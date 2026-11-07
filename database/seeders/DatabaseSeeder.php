@@ -14,9 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
-            AdminUserSeeder::class,
-            BlogContentSeeder::class,
-        ]);
+        $this->call(AdminUserSeeder::class);
+
+        if (! app()->isProduction()) {
+            $this->call(BlogContentSeeder::class);
+        }
     }
 }

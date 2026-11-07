@@ -6,6 +6,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+
         <x-layout.seo :title="$title" :description="$description" :image="$image" :type="$type" />
 
         <link rel="alternate" type="application/rss+xml" title="{{ config('app.name') }}" href="{{ route('feed') }}">
@@ -23,7 +25,10 @@
     <body class="flex min-h-screen flex-col bg-white font-sans text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
         <header class="border-b border-zinc-200 dark:border-zinc-800">
             <div class="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-5 sm:px-6">
-                <a href="{{ route('home') }}" class="text-xl font-semibold tracking-tight">{{ config('app.name') }}</a>
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-3">
+                    <img src="{{ asset('simply-blogged.webp') }}" alt="" class="h-8 w-8 rounded-lg object-contain">
+                    <span class="text-xl font-semibold tracking-tight">{{ config('app.name') }}</span>
+                </a>
 
                 <nav class="flex items-center gap-5 text-sm font-medium text-zinc-600 dark:text-zinc-400">
                     <a href="{{ route('home') }}" class="hover:text-zinc-900 dark:hover:text-white">Posts</a>

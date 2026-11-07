@@ -10,8 +10,10 @@
             <h1 class="text-4xl font-semibold tracking-tight">{{ $post->title }}</h1>
 
             <p class="mt-4 flex flex-wrap items-center gap-x-2 text-sm text-zinc-500 dark:text-zinc-400">
-                <span>By {{ $post->author->name }}</span>
-                <span aria-hidden="true">&middot;</span>
+                @if ($post->author?->exists)
+                    <span>By {{ $post->author->name }}</span>
+                    <span aria-hidden="true">&middot;</span>
+                @endif
                 <time datetime="{{ $post->published_at->toIso8601String() }}">{{ $post->published_at->format('F j, Y') }}</time>
                 <span aria-hidden="true">&middot;</span>
                 <span>{{ $post->reading_time }} min read</span>

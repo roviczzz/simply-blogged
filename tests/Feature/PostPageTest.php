@@ -6,6 +6,7 @@ use App\Models\Post;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class PostPageTest extends TestCase
@@ -66,6 +67,31 @@ class PostPageTest extends TestCase
         $post = Post::factory()->scheduled()->create();
 
         $this->get(route('posts.show', $post->slug))->assertNotFound();
+    }
+
+    public function test_published_post_with_nonexistent_author_renders_successfully_omitting_author_line(): void
+    {
+        DB::rollBack();
+        DB::statement('PRAGMA foreign_keys = OFF');
+        DB::beginTransaction();
+
+        try {
+            $post = Post::factory()->create([
+                'user_id' => 999999,
+                'title' => 'Orphaned Post',
+                'body' => 'Content without author.',
+            ]);
+
+            $this->get(route('posts.show', $post->slug))
+                ->assertOk()
+                ->assertSeeText('Orphaned Post')
+                ->assertDontSeeText('By ')
+                ->assertDontSeeText('Anonymous');
+        } finally {
+            DB::rollBack();
+            DB::statement('PRAGMA foreign_keys = ON');
+            DB::beginTransaction();
+        }
     }
 
     public function test_unknown_slug_returns_not_found(): void
