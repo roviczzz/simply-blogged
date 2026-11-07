@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 #[Fillable(['user_id', 'title', 'slug', 'excerpt', 'body', 'cover_image', 'is_published', 'published_at'])]
@@ -78,6 +79,20 @@ class Post extends Model
             'html_input' => 'strip',
             'allow_unsafe_links' => false,
         ]));
+    }
+
+    protected function coverImageUrl(): Attribute
+    {
+        return Attribute::get(fn (): ?string => $this->cover_image
+            ? Storage::disk('public')->url($this->cover_image)
+            : null);
+    }
+
+    protected function summary(): Attribute
+    {
+        return Attribute::get(fn (): string => filled($this->excerpt)
+            ? $this->excerpt
+            : Str::limit(trim(strip_tags($this->body_html)), 200));
     }
 
     protected function readingTime(): Attribute

@@ -20,11 +20,11 @@
 
 ## 4. Public Frontend (Blade + Tailwind CSS)
 
-- [ ] 4.1 Implement base Blade layout (`<x-layout.app>`) and SEO OpenGraph meta component (`<x-layout.seo>`) with Tailwind CSS; verify responsive layout rendering.
-- [ ] 4.2 Implement `HomeController` and view displaying published posts, reading time estimates, pagination, and tag badges; verify with HTTP feature test.
-- [ ] 4.3 Implement `PostController` for `/posts/{slug}` showing rendered Markdown content, author metadata, and conditional Prism.js code syntax highlighting; verify 200 on published posts and 404 on drafts.
-- [ ] 4.4 Implement `TagController` for `/tags/{slug}` to display filtered posts for a specific tag; verify tag filtering with HTTP feature test.
-- [ ] 4.5 Implement `FeedController` delivering a valid RSS 2.0 XML document at `/feed`; verify XML headers and post item schema with an HTTP test.
+- [x] 4.1 Implement base Blade layout (`<x-layout.app>`) and SEO OpenGraph meta component (`<x-layout.seo>`) with Tailwind CSS; verify responsive layout rendering.
+- [x] 4.2 Implement `HomeController` and view displaying published posts, reading time estimates, pagination, and tag badges; verify with HTTP feature test.
+- [x] 4.3 Implement `PostController` for `/posts/{slug}` showing rendered Markdown content, author metadata, and conditional Prism.js code syntax highlighting; verify 200 on published posts and 404 on drafts.
+- [x] 4.4 Implement `TagController` for `/tags/{slug}` to display filtered posts for a specific tag; verify tag filtering with HTTP feature test.
+- [x] 4.5 Implement `FeedController` delivering a valid RSS 2.0 XML document at `/feed`; verify XML headers and post item schema with an HTTP test.
 
 ## 5. Verification & Delivery
 
