@@ -22,7 +22,8 @@ RUN composer install \
     --no-interaction \
     --prefer-dist \
     --optimize-autoloader \
-    --no-scripts
+    --no-scripts \
+    --ignore-platform-reqs
 
 # ==============================================================================
 # Stage 3: Final production image (PHP 8.3 + Nginx + PHP-FPM)
