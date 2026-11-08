@@ -8,4 +8,8 @@ return [
         'password' => env('ADMIN_PASSWORD', 'password'),
     ],
 
+    'media_disk' => env('MEDIA_DISK', env('COVER_IMAGE_DISK', 'public')),
+
+    'cover_disk' => env('MEDIA_DISK', env('COVER_IMAGE_DISK', 'public')),
+
 ];

@@ -86,7 +86,7 @@ class Post extends Model
     protected function coverImageUrl(): Attribute
     {
         return Attribute::get(fn (): ?string => $this->cover_image
-            ? Storage::disk('public')->url($this->cover_image)
+            ? Storage::disk(config('blog.media_disk') ?: config('blog.cover_disk') ?: 'public')->url($this->cover_image)
             : null);
     }
 

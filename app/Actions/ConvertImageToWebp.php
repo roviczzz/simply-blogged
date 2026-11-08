@@ -17,7 +17,7 @@ class ConvertImageToWebp
      * Convert an image to WebP format, normalize EXIF orientation, and persist to storage.
      *
      * @param  mixed  $file  Uploaded file, path on disk, or raw binary contents
-     * @param  string  $disk  The storage disk name
+     * @param  ?string  $disk  The storage disk name, defaulting to the configured media disk
      * @param  string  $directory  The storage directory prefix
      * @param  int  $quality  WebP compression quality (0-100)
      * @return string The storage relative path to the converted WebP image
@@ -27,10 +27,12 @@ class ConvertImageToWebp
      */
     public function execute(
         mixed $file,
-        string $disk = 'public',
+        ?string $disk = null,
         string $directory = 'covers',
         int $quality = 80
     ): string {
+        $disk ??= config('blog.media_disk') ?: config('blog.cover_disk') ?: 'public';
+
         [$contents, $orientation] = $this->extractImagePayload($file, $disk);
 
         $image = @imagecreatefromstring($contents);
@@ -63,7 +65,7 @@ class ConvertImageToWebp
      */
     public function __invoke(
         mixed $file,
-        string $disk = 'public',
+        ?string $disk = null,
         string $directory = 'covers',
         int $quality = 80
     ): string {

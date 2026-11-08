@@ -19,7 +19,7 @@ class PostsTable
             ->modifyQueryUsing(fn ($query) => $query->with('tags'))
             ->columns([
                 ImageColumn::make('cover_image')
-                    ->disk('public'),
+                    ->disk(config('blog.media_disk') ?: config('blog.cover_disk') ?: 'public'),
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable(),

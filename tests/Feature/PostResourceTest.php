@@ -84,6 +84,61 @@ class PostResourceTest extends TestCase
         $this->assertSame('WEBP', substr($contents, 8, 4));
     }
 
+    public function test_cover_image_uses_configured_media_disk(): void
+    {
+        config(['blog.media_disk' => 'custom-media']);
+        Storage::fake('custom-media');
+        Storage::fake('public');
+
+        Livewire::test(CreatePost::class)
+            ->fillForm([
+                'title' => 'Configured Media Disk',
+                'slug' => 'configured-media-disk',
+                'body' => 'Body',
+                'cover_image' => UploadedFile::fake()->image('cover.jpg'),
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $post = Post::where('slug', 'configured-media-disk')->firstOrFail();
+
+        Storage::disk('custom-media')->assertExists($post->cover_image);
+        Storage::disk('public')->assertMissing($post->cover_image);
+        $this->assertSame(
+            Storage::disk('custom-media')->url($post->cover_image),
+            $post->cover_image_url,
+        );
+    }
+
+    public function test_cover_image_falls_back_to_legacy_cover_disk_setting(): void
+    {
+        config([
+            'blog.media_disk' => null,
+            'blog.cover_disk' => 'legacy-covers',
+        ]);
+        Storage::fake('legacy-covers');
+        Storage::fake('public');
+
+        Livewire::test(CreatePost::class)
+            ->fillForm([
+                'title' => 'Legacy Disk',
+                'slug' => 'legacy-disk',
+                'body' => 'Body',
+                'cover_image' => UploadedFile::fake()->image('cover.jpg'),
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $post = Post::where('slug', 'legacy-disk')->firstOrFail();
+
+        Storage::disk('legacy-covers')->assertExists($post->cover_image);
+        Storage::disk('public')->assertMissing($post->cover_image);
+        $this->assertSame(
+            Storage::disk('legacy-covers')->url($post->cover_image),
+            $post->cover_image_url,
+        );
+    }
+
     public function test_cover_image_up_to_10mb_is_accepted_and_converted_to_webp(): void
     {
         Storage::fake('public');

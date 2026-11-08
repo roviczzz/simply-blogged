@@ -54,13 +54,13 @@ class PostForm
                     ->schema([
                         FileUpload::make('cover_image')
                             ->image()
-                            ->disk('public')
+                            ->disk(config('blog.media_disk') ?: config('blog.cover_disk') ?: 'public')
                             ->directory('covers')
                             ->visibility('public')
                             ->maxSize(10240)
                             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                             ->saveUploadedFileUsing(static function (ConvertImageToWebp $converter, TemporaryUploadedFile|UploadedFile $file): string {
-                                return $converter->execute($file);
+                                return $converter->execute($file, config('blog.media_disk') ?: config('blog.cover_disk') ?: 'public');
                             }),
                         Select::make('tags')
                             ->relationship('tags', 'name')

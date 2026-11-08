@@ -47,14 +47,15 @@ class ConvertPostCoversToWebp extends Command
             return self::SUCCESS;
         }
 
-        $disk = Storage::disk('public');
+        $diskName = config('blog.media_disk') ?: config('blog.cover_disk') ?: 'public';
+        $disk = Storage::disk($diskName);
 
         if ($isDryRun) {
             $this->info('Dry run mode enabled. No files or database records will be modified.');
 
             foreach ($posts as $post) {
                 if (! $disk->exists($post->cover_image)) {
-                    $this->warn("Post #{$post->id} ({$post->title}): Source image [{$post->cover_image}] not found on public disk. Skipping.");
+                    $this->warn("Post #{$post->id} ({$post->title}): Source image [{$post->cover_image}] not found on {$diskName} disk. Skipping.");
 
                     continue;
                 }
@@ -73,13 +74,13 @@ class ConvertPostCoversToWebp extends Command
             $oldPath = $post->cover_image;
 
             if (! $disk->exists($oldPath)) {
-                $this->warn("Post #{$post->id} ({$post->title}): Source image [{$oldPath}] not found on public disk. Skipping.");
+                $this->warn("Post #{$post->id} ({$post->title}): Source image [{$oldPath}] not found on {$diskName} disk. Skipping.");
 
                 continue;
             }
 
             try {
-                $newPath = $converter->execute($oldPath, disk: 'public', quality: 80);
+                $newPath = $converter->execute($oldPath, disk: $diskName, quality: 80);
 
                 if (! $disk->exists($newPath) || $disk->size($newPath) === 0) {
                     $this->error("Post #{$post->id}: Converted file [{$newPath}] is invalid or empty. Aborting conversion for this post.");
