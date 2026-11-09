@@ -33,6 +33,18 @@
                 <nav class="flex items-center gap-5 text-sm font-medium text-zinc-600 dark:text-zinc-400">
                     <a href="{{ route('home') }}" class="hover:text-zinc-900 dark:hover:text-white">Posts</a>
                     <a href="{{ route('feed') }}" class="hover:text-zinc-900 dark:hover:text-white">RSS</a>
+
+                    @guest
+                        <a href="{{ route('filament.admin.auth.login') }}" class="hover:text-zinc-900 dark:hover:text-white">Sign in</a>
+                    @endguest
+
+                    @auth
+                        <a href="{{ route('filament.admin.pages.dashboard') }}" class="hover:text-zinc-900 dark:hover:text-white">Admin</a>
+                        <form method="POST" action="{{ route('logout') }}" class="inline">
+                            @csrf
+                            <button type="submit" class="cursor-pointer hover:text-zinc-900 dark:hover:text-white">Sign out</button>
+                        </form>
+                    @endauth
                 </nav>
             </div>
         </header>

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Post;
 use App\Models\Tag;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -87,5 +88,29 @@ class HomePageTest extends TestCase
             ->assertSee('rel="icon" type="image/x-icon" href="'.asset('favicon.ico').'"', false)
             ->assertSee('<img src="'.asset('simply-blogged.webp').'" alt="" class="h-8 w-8 rounded-lg object-contain">', false)
             ->assertSee('<span class="text-xl font-semibold tracking-tight">'.config('app.name').'</span>', false);
+    }
+
+    public function test_header_renders_sign_in_link_for_guests(): void
+    {
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('href="'.route('filament.admin.auth.login').'"', false)
+            ->assertSeeText('Sign in')
+            ->assertDontSeeText('Admin')
+            ->assertDontSeeText('Sign out');
+    }
+
+    public function test_header_renders_admin_and_sign_out_links_for_authenticated_users(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('home'))
+            ->assertOk()
+            ->assertSee('href="'.route('filament.admin.pages.dashboard').'"', false)
+            ->assertSeeText('Admin')
+            ->assertSee('action="'.route('logout').'"', false)
+            ->assertSeeText('Sign out')
+            ->assertDontSeeText('Sign in');
     }
 }
