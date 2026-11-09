@@ -1,0 +1,109 @@
+name: Wake Up Supabase
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  wake-up:
+    name: Probe Supabase Endpoints
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run Supabase wake-up probe
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_TABLE: ${{ secrets.SUPABASE_TABLE || 'posts' }}
+          SUPABASE_PROJECTS_JSON: ${{ secrets.SUPABASE_PROJECTS_JSON }}
+        run: |
+          python3 - << 'EOF'
+          import os
+          import sys
+          import json
+          import urllib.request
+          import urllib.error
+
+          projects_json = os.environ.get('SUPABASE_PROJECTS_JSON', '').strip()
+          default_table = os.environ.get('SUPABASE_TABLE', '').strip() or 'posts'
+          projects = []
+
+          if projects_json:
+              try:
+                  parsed = json.loads(projects_json)
+                  if isinstance(parsed, list):
+                      projects.extend(parsed)
+                  elif isinstance(parsed, dict):
+                      projects.append(parsed)
+              except Exception as e:
+                  print(f"::error::Error parsing SUPABASE_PROJECTS_JSON: {e}", file=sys.stderr)
+                  sys.exit(1)
+
+          supabase_url = os.environ.get('SUPABASE_URL', '').strip()
+          supabase_anon_key = os.environ.get('SUPABASE_ANON_KEY', '').strip()
+
+          if not projects and supabase_url and supabase_anon_key:
+              projects.append({
+                  'url': supabase_url,
+                  'anon_key': supabase_anon_key,
+                  'table': default_table
+              })
+
+          if not projects:
+              print("::error::No Supabase credentials configured. Please set SUPABASE_PROJECTS_JSON or both SUPABASE_URL and SUPABASE_ANON_KEY repository secrets.", file=sys.stderr)
+              sys.exit(1)
+
+          has_error = False
+
+          for idx, proj in enumerate(projects, 1):
+              url = proj.get('url', '').rstrip('/')
+              anon_key = proj.get('anon_key', '').strip()
+              table = proj.get('table', '').strip() or default_table
+
+              if not url or not anon_key:
+                  print(f"::error::Project #{idx} is missing required 'url' or 'anon_key'.", file=sys.stderr)
+                  has_error = True
+                  continue
+
+              print(f"\n--- Probing Supabase Project #{idx}: {url} ---")
+
+              endpoints = [
+                  ("REST API", f"{url}/rest/v1/{table}?select=*&limit=1"),
+                  ("Auth API", f"{url}/auth/v1/health"),
+              ]
+
+              headers = {
+                  "apikey": anon_key,
+                  "Authorization": f"Bearer {anon_key}",
+                  "User-Agent": "GitHub-Actions-Supabase-Probe/1.0"
+              }
+
+              for name, endpoint_url in endpoints:
+                  print(f"Pinging {name} ({endpoint_url})...")
+                  req = urllib.request.Request(endpoint_url, headers=headers, method="GET")
+                  try:
+                      with urllib.request.urlopen(req, timeout=45) as resp:
+                          code = resp.getcode()
+                          print(f"  ✓ {name} responded with status {code}")
+                          if code < 200 or code >= 300:
+                              print(f"::error::{name} returned non-2xx status code: {code}", file=sys.stderr)
+                              has_error = True
+                  except urllib.error.HTTPError as e:
+                      print(f"::error::{name} HTTP error: {e.code} {e.reason}", file=sys.stderr)
+                      has_error = True
+                  except Exception as e:
+                      print(f"::error::{name} request failed: {type(e).__name__}: {e}", file=sys.stderr)
+                      has_error = True
+
+          if has_error:
+              print("\n::error::One or more Supabase probe endpoints failed.", file=sys.stderr)
+              sys.exit(1)
+
+          print("\n✓ All Supabase projects probed successfully!")
+          EOF
