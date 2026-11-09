@@ -149,6 +149,47 @@ vendor/bin/pint --format agent
 
 ---
 
+## CI/CD & Automation
+
+The repository includes GitHub Actions workflows configured in `.github/workflows/`:
+
+1. **Continuous Integration (`ci.yml`)**:
+   - Triggers automatically on `push` and `pull_request` targeting `main` or `master`, and on manual dispatch (`workflow_dispatch`).
+   - Runs on PHP 8.4 with required extensions (`gd`, `pdo_sqlite`, `intl`, `exif`, `zip`).
+   - Executes Laravel Pint style validation (`vendor/bin/pint --test`).
+   - Compiles frontend assets with Node 22 (`npm ci && npm run build`).
+   - Executes the complete PHPUnit test suite against an in-memory SQLite database.
+
+2. **Render Web Service Keep-Alive (`keep-alive-render.yml`)**:
+   - Runs every 14 minutes (`*/14 * * * *`) and on manual dispatch (`workflow_dispatch`).
+   - Sends an HTTP GET request to `${RENDER_URL}/up` with a 90-second timeout to prevent Render free-tier instances from spinning down due to inactivity.
+
+3. **Supabase Keep-Alive (`wake-up-supabase.yml`)**:
+   - Runs daily at 06:00 UTC (`0 6 * * *`) and on manual dispatch (`workflow_dispatch`).
+   - Probes both REST API (`/rest/v1/{table}?select=*&limit=1`) and Auth API (`/auth/v1/health`) to prevent Supabase free-tier project pausing after 7 days of inactivity.
+
+### Required Repository Secrets
+
+Configure the following secrets in GitHub under **Settings > Secrets and variables > Actions**:
+
+| Secret | Description | Required | Default |
+| --- | --- | --- | --- |
+| `RENDER_URL` | Full base URL of your Render service (e.g., `https://simply-blogged.onrender.com`) | Yes (for Render keep-alive) | — |
+| `SUPABASE_URL` | Supabase project URL (e.g., `https://xyzcompany.supabase.co`) | Yes (for single-project Supabase probe) | — |
+| `SUPABASE_ANON_KEY` | Supabase public anonymous API key | Yes (for single-project Supabase probe) | — |
+| `SUPABASE_TABLE` | Database table to query during the REST probe | No | `posts` |
+| `SUPABASE_PROJECTS_JSON` | JSON array of Supabase projects: `[{"url": "https://...", "anon_key": "...", "table": "posts"}]` | No (alternative for multi-project keep-alive) | — |
+
+### Maintenance & Private Repository Considerations
+
+- **GitHub Actions Minutes**: Private repositories include 2,000 free runner minutes per month. A 14-minute cron schedule consumes approximately 3,000 minutes monthly (since GitHub rounds each job execution up to the nearest whole minute). If your repository is private and minutes are constrained, consider:
+  - Adjusting the Render cron schedule in `.github/workflows/keep-alive-render.yml` to a longer interval.
+  - Making the repository public (which has unlimited Actions minutes).
+  - Using an external free uptime monitoring service (such as [cron-job.org](https://cron-job.org) or [UptimeRobot](https://uptimerobot.com)) pointing to `<your-render-url>/up`.
+- **Manual Verification**: All workflows support `workflow_dispatch`, allowing you to trigger runs on demand from the GitHub Actions tab to verify credentials and endpoint availability.
+
+---
+
 ## License
 
 This project is open-sourced software licensed under the [MIT license](LICENSE).

@@ -1,0 +1,36 @@
+name: Keep Alive Render
+
+on:
+  schedule:
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    name: Ping Render Health Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send keep-alive ping to Render /up endpoint
+        env:
+          RENDER_URL: ${{ secrets.RENDER_URL }}
+        run: |
+          if [ -z "$RENDER_URL" ]; then
+            echo "::error::RENDER_URL secret is not configured or is empty. Please set RENDER_URL in GitHub repository secrets."
+            exit 1
+          fi
+
+          # Strip trailing slash if present
+          CLEAN_URL="${RENDER_URL%/}"
+          TARGET_URL="${CLEAN_URL}/up"
+
+          echo "Pinging ${TARGET_URL}..."
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -L --max-time 90 "$TARGET_URL")
+          echo "Received HTTP status code: $STATUS_CODE"
+
+          if [ "$STATUS_CODE" -ge 200 ] && [ "$STATUS_CODE" -le 399 ]; then
+            echo "Success: Render web service responded with HTTP status $STATUS_CODE."
+          else
+            echo "::error::Health check failed: expected HTTP status 200-399, but received $STATUS_CODE."
+            exit 1
+          fi
