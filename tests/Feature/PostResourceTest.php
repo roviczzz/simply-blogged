@@ -273,4 +273,119 @@ class PostResourceTest extends TestCase
         $this->assertSame('New title', $post->title);
         $this->assertTrue(Post::published()->whereKey($post->id)->exists());
     }
+
+    public function test_post_body_image_attachment_is_converted_to_webp_and_stored_under_attachments_directory(): void
+    {
+        Storage::fake('public');
+
+        $file = UploadedFile::fake()->image('diagram.png');
+
+        $test = Livewire::test(CreatePost::class)
+            ->set('componentFileAttachments.data.body', $file)
+            ->call('callSchemaComponentMethod', 'form.body', 'saveUploadedFileAttachmentAndGetUrl');
+
+        $url = data_get($test->effects, 'returns.0');
+        $this->assertNotNull($url);
+
+        $storedFiles = Storage::disk('public')->allFiles('attachments');
+        $this->assertCount(1, $storedFiles);
+
+        $storedPath = $storedFiles[0];
+        $this->assertStringStartsWith('attachments/', $storedPath);
+        $this->assertStringEndsWith('.webp', $storedPath);
+
+        $contents = Storage::disk('public')->get($storedPath);
+        $this->assertStringStartsWith('RIFF', $contents);
+        $this->assertSame('WEBP', substr($contents, 8, 4));
+
+        $this->assertSame(Storage::disk('public')->url($storedPath), $url);
+    }
+
+    public function test_post_body_image_attachment_uses_configured_media_disk(): void
+    {
+        config(['blog.media_disk' => 'custom-media']);
+        Storage::fake('custom-media');
+        Storage::fake('public');
+
+        $file = UploadedFile::fake()->image('screenshot.jpg');
+
+        $test = Livewire::test(CreatePost::class)
+            ->set('componentFileAttachments.data.body', $file)
+            ->call('callSchemaComponentMethod', 'form.body', 'saveUploadedFileAttachmentAndGetUrl');
+
+        $url = data_get($test->effects, 'returns.0');
+        $this->assertNotNull($url);
+
+        $storedFiles = Storage::disk('custom-media')->allFiles('attachments');
+        $this->assertCount(1, $storedFiles);
+        $storedPath = $storedFiles[0];
+
+        Storage::disk('custom-media')->assertExists($storedPath);
+        Storage::disk('public')->assertMissing($storedPath);
+
+        $this->assertSame(Storage::disk('custom-media')->url($storedPath), $url);
+    }
+
+    public function test_post_body_image_attachment_resolves_supabase_storage_url_when_supabase_disk_configured(): void
+    {
+        config(['blog.media_disk' => 'supabase']);
+        Storage::fake('supabase', [
+            'url' => 'https://test-project.supabase.co/storage/v1/object/public/media',
+        ]);
+
+        $file = UploadedFile::fake()->image('photo.jpeg');
+
+        $test = Livewire::test(CreatePost::class)
+            ->set('componentFileAttachments.data.body', $file)
+            ->call('callSchemaComponentMethod', 'form.body', 'saveUploadedFileAttachmentAndGetUrl');
+
+        $url = data_get($test->effects, 'returns.0');
+        $this->assertNotNull($url);
+
+        $storedFiles = Storage::disk('supabase')->allFiles('attachments');
+        $this->assertCount(1, $storedFiles);
+        $storedPath = $storedFiles[0];
+
+        $this->assertStringStartsWith('https://test-project.supabase.co/storage/v1/object/public/media/attachments/', $url);
+        $this->assertSame(Storage::disk('supabase')->url($storedPath), $url);
+    }
+
+    public function test_post_body_attachment_exceeding_10mb_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        $largeFile = UploadedFile::fake()->image('huge.png')->size(10241);
+
+        $test = Livewire::test(CreatePost::class)
+            ->set('componentFileAttachments.data.body', $largeFile)
+            ->call('callSchemaComponentMethod', 'form.body', 'saveUploadedFileAttachmentAndGetUrl');
+
+        $this->assertNull(data_get($test->effects, 'returns.0'));
+        $this->assertEmpty(Storage::disk('public')->allFiles('attachments'));
+    }
+
+    public function test_post_body_attachment_with_invalid_mime_type_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        $nonImageFile = UploadedFile::fake()->create('document.pdf', 500, 'application/pdf');
+
+        $test = Livewire::test(CreatePost::class)
+            ->set('componentFileAttachments.data.body', $nonImageFile)
+            ->call('callSchemaComponentMethod', 'form.body', 'saveUploadedFileAttachmentAndGetUrl');
+
+        $this->assertNull(data_get($test->effects, 'returns.0'));
+        $this->assertEmpty(Storage::disk('public')->allFiles('attachments'));
+    }
+
+    public function test_post_body_markdown_editor_attachment_configuration(): void
+    {
+        $test = Livewire::test(CreatePost::class);
+        $bodyComponent = $test->instance()->getSchema('form')->getComponent('body');
+
+        $this->assertNotNull($bodyComponent);
+        $this->assertSame('attachments', $bodyComponent->getFileAttachmentsDirectory());
+        $this->assertSame(10240, $bodyComponent->getFileAttachmentsMaxSize());
+        $this->assertSame(['image/jpeg', 'image/png', 'image/webp'], $bodyComponent->getFileAttachmentsAcceptedFileTypes());
+    }
 }
