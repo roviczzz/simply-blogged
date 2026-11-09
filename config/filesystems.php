@@ -69,7 +69,7 @@ return [
             'url' => env('SUPABASE_URL') ? rtrim(env('SUPABASE_URL'), '/').'/storage/v1/object/public/'.env('SUPABASE_BUCKET', 'media') : null,
             'endpoint' => env('SUPABASE_ENDPOINT', env('SUPABASE_URL') ? rtrim(env('SUPABASE_URL'), '/').'/storage/v1/s3' : null),
             'use_path_style_endpoint' => true,
-            'throw' => false,
+            'throw' => true,
             'report' => false,
         ],
 

@@ -18,11 +18,19 @@ The system SHALL display a paginated list of published posts on the homepage, or
 - **THEN** the system excludes any posts marked as draft or with a future publication date
 
 ### Requirement: Post Detail View with Markdown and Code Highlighting
-The system SHALL render published posts by URL slug, converting Markdown content into HTML and providing client-side code syntax highlighting for code snippets.
+The system SHALL render published posts by URL slug, converting Markdown content into HTML, providing client-side code syntax highlighting for code snippets, and presenting author identity with avatar attribution when available.
 
 #### Scenario: Reading a published post
 - **WHEN** a visitor accesses `/posts/{slug}` for an existing published post
 - **THEN** the system renders the article HTML with formatted Markdown and initializes syntax highlighting on all preformatted code blocks
+
+#### Scenario: Reading a published post with author avatar
+- **WHEN** a visitor accesses `/posts/{slug}` for a published post whose author has an uploaded avatar photo
+- **THEN** the system renders the author's circular avatar image alongside the author name in the byline
+
+#### Scenario: Reading a published post with author lacking avatar
+- **WHEN** a visitor accesses `/posts/{slug}` for a published post whose author has no avatar photo
+- **THEN** the system renders the author name as text without rendering an empty or broken image element
 
 #### Scenario: Reading a published post with missing or deleted author
 - **WHEN** a visitor accesses `/posts/{slug}` for a published post whose author record does not exist
@@ -61,7 +69,7 @@ The system SHALL include a standard favicon link tag pointing to the website ico
 - **THEN** the rendered HTML contains a link tag referencing `favicon.ico` with relationship `icon`
 
 ### Requirement: Authentication-Aware Header Navigation and Session Logout
-The public layout header SHALL render contextual authentication navigation reflecting the visitor's authentication state and provide a secure session termination mechanism that returns to the homepage.
+The public layout header SHALL render contextual authentication navigation reflecting the visitor's authentication state, displaying the administrator avatar when authenticated, and provide a secure session termination mechanism that returns to the homepage.
 
 #### Scenario: Guest views header navigation
 - **WHEN** an unauthenticated visitor views any public blog page
@@ -69,7 +77,7 @@ The public layout header SHALL render contextual authentication navigation refle
 
 #### Scenario: Authenticated administrator views header navigation
 - **WHEN** an authenticated administrator views any public blog page
-- **THEN** the header displays an "Admin" link pointing to the administration dashboard and a "Sign out" form control
+- **THEN** the header displays an "Admin" link pointing to the administration dashboard, presenting the administrator's avatar photo when available, and a "Sign out" form control
 
 #### Scenario: Administrator signs out from public header
 - **WHEN** an authenticated administrator submits the public "Sign out" form via POST

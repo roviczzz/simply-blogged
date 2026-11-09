@@ -11,7 +11,12 @@
 
             <p class="mt-4 flex flex-wrap items-center gap-x-2 text-sm text-zinc-500 dark:text-zinc-400">
                 @if ($post->author?->exists)
-                    <span>By {{ $post->author->name }}</span>
+                    <span class="inline-flex items-center gap-x-2">
+                        @if ($post->author->avatar_url)
+                            <img src="{{ $post->author->avatar_url }}" alt="{{ $post->author->name }}" class="h-6 w-6 rounded-full object-cover">
+                        @endif
+                        <span>By {{ $post->author->name }}</span>
+                    </span>
                     <span aria-hidden="true">&middot;</span>
                 @endif
                 <time datetime="{{ $post->published_at->toIso8601String() }}">{{ $post->published_at->format('F j, Y') }}</time>

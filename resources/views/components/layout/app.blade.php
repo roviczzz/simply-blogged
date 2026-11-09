@@ -39,7 +39,12 @@
                     @endguest
 
                     @auth
-                        <a href="{{ route('filament.admin.pages.dashboard') }}" class="hover:text-zinc-900 dark:hover:text-white">Admin</a>
+                        <a href="{{ route('filament.admin.pages.dashboard') }}" class="inline-flex items-center gap-2 hover:text-zinc-900 dark:hover:text-white">
+                            @if (auth()->user()?->avatar_url)
+                                <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="h-5 w-5 rounded-full object-cover">
+                            @endif
+                            <span>Admin</span>
+                        </a>
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
                             <button type="submit" class="cursor-pointer hover:text-zinc-900 dark:hover:text-white">Sign out</button>
