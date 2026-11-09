@@ -42,4 +42,14 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /**
+     * Indicate that the user has an avatar.
+     */
+    public function withAvatar(?string $path = null): static
+    {
+        return $this->state(fn (): array => [
+            'avatar_path' => $path ?? 'avatars/'.Str::uuid().'.webp',
+        ]);
+    }
 }

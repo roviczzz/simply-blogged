@@ -31,6 +31,40 @@ class PostPageTest extends TestCase
             ->assertSee('property="og:type" content="article"', false);
     }
 
+    public function test_post_page_renders_author_avatar_when_present(): void
+    {
+        $author = User::factory()->withAvatar()->create(['name' => 'Alice Illustrated']);
+        $post = Post::factory()->for($author, 'author')->create([
+            'title' => 'Illustrated Article',
+            'body' => 'Body text here.',
+        ]);
+
+        $this->get(route('posts.show', $post->slug))
+            ->assertOk()
+            ->assertSeeText('By Alice Illustrated')
+            ->assertSee($author->avatar_url, false)
+            ->assertSee('alt="Alice Illustrated"', false);
+    }
+
+    public function test_post_page_omits_avatar_image_when_author_has_no_avatar(): void
+    {
+        $author = User::factory()->create([
+            'name' => 'Bob Simple',
+            'avatar_path' => null,
+        ]);
+        $post = Post::factory()->for($author, 'author')->create([
+            'title' => 'Unadorned Post',
+            'body' => 'Clean typography.',
+        ]);
+
+        $response = $this->get(route('posts.show', $post->slug))
+            ->assertOk()
+            ->assertSeeText('By Bob Simple');
+
+        $response->assertDontSee('/storage/avatars/');
+        $response->assertDontSee('alt="Bob Simple"', false);
+    }
+
     public function test_post_page_loads_prism_for_code_blocks(): void
     {
         $post = Post::factory()->create(['body' => "```php\necho 1;\n```"]);
